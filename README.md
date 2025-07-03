@@ -6,9 +6,9 @@ User prompting seeks to obtain model insights regarding the visual input.
 ## Llama 3.2 Vision
 
 - **Language Model:** Llama 3.1 base
-- **Image Encoder:** ViT-H/14 (Vision Transformer w/ 14x14 patch size) processes visual input and converts into a format the LM can understand
+- **Image Encoder:** ViT-H/14 - a Vision Transformer with a 'H'uge 14x14 patch size. This H/14 ViT processes visual input in 14x14 pixel blocks
 - **Training:** trained with datasets containing image-text pairs (standardized with CLIP). This enables the model to learn relationships between visual info and text descriptions
-- **Vision Adapter:** integrates the image encoder data (image modality) with text tokens to the LM via cross-attention. This contrasts with CLIP, which maintains a single embedding space for both modalties.
+- **Vision Adapter:** integrates the image encoder data (image modality) with text tokens to the LM via cross-attention. This contrasts with CLIP, which maintains a single embedding space for both modalties
 
 ### Further Reading
 
