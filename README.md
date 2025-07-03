@@ -1,7 +1,10 @@
 # 📦 Visual QA Chatbot using Llama 3.2 Vision
 
 A Visual QA application leveraging Meta's Llama 3.2 Vision 11B multi-modal language model (MMLM) at an OpenRouter endpoint.
-User prompting seeks to obtain model insights regarding the visual input.  
+User prompting seeks to obtain model insights regarding the visual input. The app accepts JPEG, PNG, GIF and PDF formats.
+
+**Please Note:** that multi-page PDFs can consume Llama 3.2 Context Window Size (128k) and produce inaccurate results.
+Test results were accurate and reliable up to ~6 pages. *While this app is intended for experimental/POC work to assess Llama 3.2 Vision, future enhancements may consider addressing this.*
 
 ## Llama 3.2 Vision
 
