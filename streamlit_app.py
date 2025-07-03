@@ -125,8 +125,8 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 CLIENT_ID = st.secrets.OAUTH_CLIENT_ID
 CLIENT_SECRET = st.secrets.OAUTH_CLIENT_SECRET
-#REDIRECT_URI = "https://chat-open-router.streamlit.app/"
-REDIRECT_URI = "http://localhost:8501/"
+REDIRECT_URI = "https://l3vision-open-router.streamlit.app/"
+#REDIRECT_URI = "http://localhost:8501/"
 SCOPE = "openid email profile"
 
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZATION_URL, TOKEN_URL, TOKEN_URL, REVOKE_URL)
