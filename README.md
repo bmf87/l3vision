@@ -1,22 +1,26 @@
-# 📦 Streamlit App Starter Kit 
+# 📦 Visual QA Chatbot using Llama 3.2 Vision
 
-A Simple Template to get started with Streamlit apps
+A Visual QA application leveraging Meta's Llama 3.2 Vision 11B multi-modal language model (MMLM) at an OpenRouter endpoint.
+User prompting seeks to obtain model insights regarding the visual input.  
+
+## Llama 3.2 Vision
+
+- **Language Model:** Llama 3.1 base
+- **Image Encoder:** ViT-H/14 (Vision Transformer w/ 14x14 patch size) processes visual input and converts into a format the LM can understand
+- **Training:** trained with datasets containing image-text pairs (standardized with CLIP). This enables the model to learn relationships between visual info and text descriptions
+- **Vision Adapter:** integrates the image encoder data (image modality) with text tokens to the LM via cross-attention. This contrasts with CLIP, which maintains a single embedding space for both modalties.
+
+### Further Reading
+
+For some further reading on Llama 3.2 visit [ai.meta.com](https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/)
+
+## OpenRouter
+
+[OpenRouter](https://openrouter.ai) provides a unified interface for leveraging LLMs with an API compatible with OpenAI
+
+- Provides an endpoint with a built-in fallback API.  Alleviating the need to deal with API failures
+- Integrates nicely with ChatOpenAI class in LangChain
 
 ## Demo App
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
-
-## GitHub Codespaces
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/app-starter-kit?quickstart=1)
-
-## Section Heading
-
-This is filler text, please replace this with text for this section.
-
-## Further Reading
-
-This is filler text, please replace this with a explanatory text about further relevant resources for this repo
-- Resource 1
-- Resource 2
-- Resource 3
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://l3vision-open-router.streamlit.app/)
