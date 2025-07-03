@@ -16,4 +16,8 @@ langsmith>=0.2.0
 
 pdf2image>=1.17.0
 
+poppler>=24.09.0
+
+poppler-data>=0.4.11
+
 streamlit-js-eval>=0.1.7
