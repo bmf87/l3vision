@@ -15,13 +15,15 @@ class LModelAccess:
     }
    
 
-    def __init__(self, api_key=None):
+    def __init__(self, app_name, app_dns, api_key=None):
         """
         Initialize the LModelAccess class.
         """
         self.log = st.logger.get_logger(__name__)
-        self.log.debug("LModelAccess initialized")
+        self.app_name = app_name
+        self.app_dns = app_dns
         self.api_base_url = "https://openrouter.ai/api/v1"
+        self.log.debug("LModelAccess initialized for app: %s", self.app_name)
         if api_key is None:
             self.log.critical("OpenRouter API key was not provided!")
             raise ValueError("OpenRouter API key must be provided!")
@@ -66,7 +68,11 @@ class LModelAccess:
             temperature=temperature,
             openai_api_key=self.api_key,
             openai_api_base=self.api_base_url,
-            model_name=model_name
+            model_name=model_name,
+            default_headers={
+                "X-Title": self.app_name,
+                "HTTP-Referer": self.app_dns
+            },
         )
         return llm
 

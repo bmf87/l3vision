@@ -7,14 +7,17 @@ from streamlit_oauth import OAuth2Component
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 from streamlit_js_eval import streamlit_js_eval
 
-sb_initial_state = "expanded"
+
+app_name = "VQA Chatbot"
+app_dns = "https://l3vision-open-router.streamlit.app/"
 openai_api_key = st.secrets.openrouter_api_key
 log = st.logger.get_logger(__name__)
-lma = LModelAccess(openai_api_key)
+lma = LModelAccess(app_name, app_dns, openai_api_key)
 image_tools = ImageTools()
 models = lma.get_all_models()
 selected_model = models[0]
 PDF_MIME_TYPE = "application/pdf"
+sb_initial_state = "expanded"
 
 avatar_lkp = ({
     "Male" : "images/man.png",
@@ -40,7 +43,7 @@ css = '''
     '''
 def app_setup():
     st.set_page_config(
-        page_title="VQA Chatbot",
+        page_title=app_name,
         page_icon=":earth_americas:",
         layout="wide",
         initial_sidebar_state=sb_initial_state,
@@ -125,8 +128,8 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 CLIENT_ID = st.secrets.OAUTH_CLIENT_ID
 CLIENT_SECRET = st.secrets.OAUTH_CLIENT_SECRET
-REDIRECT_URI = "https://l3vision-open-router.streamlit.app/"
-#REDIRECT_URI = "http://localhost:8501/"
+#REDIRECT_URI = app_dns
+REDIRECT_URI = "http://localhost:8501/"
 SCOPE = "openid email profile"
 
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZATION_URL, TOKEN_URL, TOKEN_URL, REVOKE_URL)
@@ -158,6 +161,10 @@ def main():
         log.info(f"Created Session ID: {session_id}")
         app_setup()
         viewport_height = streamlit_js_eval(js_expressions='window.parent.innerHeight', key='HEIGHT', want_output=True)
+        if viewport_height is None:
+            log.error("Failed to retrieve viewport height. Defaulting to 800px")
+            viewport_height = 800
+        
         log.debug(f"Viewport height: {viewport_height}")
         container_height_px = int(viewport_height * 0.4)
     
