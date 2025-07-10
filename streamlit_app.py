@@ -128,8 +128,8 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 CLIENT_ID = st.secrets.OAUTH_CLIENT_ID
 CLIENT_SECRET = st.secrets.OAUTH_CLIENT_SECRET
-#REDIRECT_URI = app_dns
-REDIRECT_URI = "http://localhost:8501/"
+REDIRECT_URI = app_dns
+#REDIRECT_URI = "http://localhost:8501/"
 SCOPE = "openid email profile"
 
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZATION_URL, TOKEN_URL, TOKEN_URL, REVOKE_URL)
@@ -151,7 +151,7 @@ def main():
         if result:
             st.session_state.token = result.get('token')
             log.debug(st.session_state.token)
-            # decode JWT id_token jwt containing user auth info (email)
+            # decode JWT id_token: contains user auth info (email)
             id_token = st.session_state.token.get("id_token")
             st.session_state.auth_email = get_user_info(id_token)
             st.rerun()
