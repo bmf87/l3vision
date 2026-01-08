@@ -9,9 +9,12 @@ class LModelAccess:
     
     model_repository = {
         "llama": [
-            "meta-llama/llama-3.2-11b-vision-instruct:free"               #  Llama 3.2 11B Vision - Multi-modal 
-
+            "meta-llama/llama-3.2-11b-vision-instruct",               #  Llama 3.2 11B Vision - Multi-modal 
+            "meta-llama/llama-4-maverick",                            # Llama 4 Maverick - Multi-modal
         ],
+        "google": [
+            "google/gemini-3-pro-preview"                             # Gemini 3.0 Pro Preview - Multi-modal
+        ]
     }
    
 
@@ -46,6 +49,15 @@ class LModelAccess:
         else:
             raise ValueError(f"Provider '{provider}' not found in model repository.")
     
+    def get_model_by_id(self, model_id):
+        models = self.get_all_models()
+        try:
+            index = models.index(model_id)
+        except ValueError:
+            raise ValueError(f"Model '{model_id}' not found in model repository.")
+        return models[index]
+    
+
     def get_all_models(self):
         models = list()
         for key in self.model_repository:

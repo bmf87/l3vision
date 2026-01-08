@@ -40,7 +40,10 @@ class PromptUtils:
         """
         try:
             token_count = count_tokens_approximately([message])
+            estimated_bytes = token_count * 4 # Estimate 1 token = 4 chars
+            estimated_kb = estimated_bytes / 1024
             PromptUtils.log.info(f"Prompt token count: {token_count}")
+            PromptUtils.log.info(f"Estimated prompt size: {estimated_kb:.2f} KB")
         except Exception as e:
             PromptUtils.log.inform(f"Error checking token count: {e}")
     

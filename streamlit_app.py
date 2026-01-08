@@ -1,5 +1,6 @@
 import os, time, logging, json, base64
 import streamlit as st
+from util.secrets import Secrets 
 from llm.tools.lmodel_access import LModelAccess
 from llm.tools.image_tools import ImageTools
 from llm.tools.prompt_utils import PromptUtils
@@ -9,14 +10,23 @@ from streamlit_js_eval import streamlit_js_eval
 
 
 app_name = "VQA Chatbot"
-app_dns = "https://l3vision-open-router.streamlit.app/"
-openai_api_key = st.secrets.openrouter_api_key
+init_model = "google/gemini-3-pro-preview"
+local = True
+
+app_dns = "http://localhost:8502/" if local else "https://l3vision-open-router.streamlit.app/"
 log = st.logger.get_logger(__name__)
-lma = LModelAccess(app_name, app_dns, openai_api_key)
+log.info(f"{app_name}app_dns: {app_dns}")
+
+lma = LModelAccess(app_name, app_dns, Secrets.OPENROUTER_API_KEY.value)
 image_tools = ImageTools()
 models = lma.get_all_models()
-selected_model = models[0]
+default_model = lma.get_model_by_id(init_model)
+default_index = models.index(default_model)
+
+# supported file types
+ENABLED_FILES_TYPES = ["jpeg", "jpg", "png", "gif", "pdf", "pptx", "ppt"]
 PDF_MIME_TYPE = "application/pdf"
+PPTX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 sb_initial_state = "expanded"
 
 avatar_lkp = ({
@@ -55,7 +65,9 @@ def init_sidebar():
         selected_model = st.selectbox("Model:", 
                                       models, key="active_model", 
                                       help="Choose an Open Source Model", 
-                                      on_change=model_change)
+                                      on_change=model_change,
+                                      index=default_index
+                                      )
         st.write(f"Active Model:  ***{selected_model}***")
         st.session_state.llm = lma.get_llm(selected_model, temperature=0.0)
 
@@ -124,15 +136,17 @@ def get_user_info(id_token):
 AUTHORIZATION_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 # exchange authorization code for an access token
 TOKEN_URL = "https://oauth2.googleapis.com/token"
-# revoke the access token when the user logs out
+# revoke the access token when user logs out
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
-CLIENT_ID = st.secrets.OAUTH_CLIENT_ID
-CLIENT_SECRET = st.secrets.OAUTH_CLIENT_SECRET
 REDIRECT_URI = app_dns
-#REDIRECT_URI = "http://localhost:8501/"
 SCOPE = "openid email profile"
 
-oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZATION_URL, TOKEN_URL, TOKEN_URL, REVOKE_URL)
+oauth2 = OAuth2Component(Secrets.OAUTH_CLIENT_ID.value, 
+                         Secrets.OAUTH_CLIENT_SECRET.value, 
+                         AUTHORIZATION_URL, 
+                         TOKEN_URL, 
+                         TOKEN_URL, 
+                         REVOKE_URL)
 
 # ------------------------
 # 
@@ -141,7 +155,6 @@ oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZATION_URL, TOKEN_URL,
 # ------------------------
 def main():
     bot_avator = "images/chat-bot.png"
-    permitted_file_types = ["jpeg", "jpg", "png", "gif", "pdf"]
     
     if 'token' not in st.session_state:
         result = oauth2.authorize_button("Continue with Google", 
@@ -161,16 +174,24 @@ def main():
         log.info(f"Created Session ID: {session_id}")
         app_setup()
         viewport_height = streamlit_js_eval(js_expressions='window.parent.innerHeight', key='HEIGHT', want_output=True)
+        viewport_width = streamlit_js_eval(js_expressions='window.parent.innerWidth', key='WIDTH', want_output=True)
+        
         if viewport_height is None:
             log.error("Failed to retrieve viewport height. Defaulting to 800px")
             viewport_height = 800
+        if viewport_width is None:
+            log.error("Failed to retrieve viewport width. Defaulting to 800px")
+            viewport_width = 800
         
         log.debug(f"Viewport height: {viewport_height}")
+        log.debug(f"Viewport width: {viewport_width}")
         container_height_px = int(viewport_height * 0.4)
+        warning_message_px = int(viewport_width * 0.7)
     
         if "messages" not in st.session_state:
             st.session_state.messages = []
-   
+        warning_placeholder = st.empty() # container for dynamic warnings
+        
         if "active_model" in st.session_state:
             log.debug(f"active_model set in session => {st.session_state.active_model}")
             assert "llm" in st.session_state, "llm not set in session state!"
@@ -189,7 +210,7 @@ def main():
 
             # Display file uploader and chat input
             st.markdown(css, unsafe_allow_html=True) 
-            if ((uploaded_file := st.file_uploader("Choose a file", type=permitted_file_types)) and 
+            if ((uploaded_file := st.file_uploader("Choose a file", type=ENABLED_FILES_TYPES)) and 
                 (prompt := st.chat_input("Describe this image"))):
         
                 # Read file as bytes:
@@ -198,6 +219,19 @@ def main():
                 if mime_type == PDF_MIME_TYPE:
                     log.debug("PDF document requires conversion to image")
                     byte_data = image_tools.pdf_to_jpeg(uploaded_file.getvalue())
+                    mime_type = "image/jpeg"  # Reset: JPEG image
+                elif mime_type == PPTX_MIME_TYPE:
+                    log.debug("PPTX document requires conversion to image. Checking file size...")
+                    file_size = uploaded_file.size
+                    if file_size > 3 * 1024 * 1024:
+                        log.error("PPTX file size is larger than the 3MB limit.")
+                        with warning_placeholder:
+                            st.warning("""
+                                The uploaded Presentation is larger than the 3MB limit imposed by the API for converting to images!\n
+                                Please remove it and then upload a smaller presentation size or convert it to PDF first.
+                            """, icon="⚠️", width=warning_message_px)
+                        return
+                    byte_data = image_tools.pptx_to_jpeg(Secrets.CLOUDMERSIVE_API_KEY.value, uploaded_file.getvalue())
                     mime_type = "image/jpeg"  # Reset: JPEG image
                 else:
                     byte_data = uploaded_file.getvalue()

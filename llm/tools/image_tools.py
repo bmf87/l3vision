@@ -1,8 +1,9 @@
-import tempfile
+import ast, os, tempfile
 import streamlit as st
 from PIL import Image
-from pdf2image import convert_from_bytes
-
+import fitz  # PyMuPDF
+import cloudmersive_convert_api_client
+from cloudmersive_convert_api_client.rest import ApiException
 
 class ImageTools:
     """
@@ -21,7 +22,6 @@ class ImageTools:
         Convert PDF file to a JPEG image. Multiple pages are converted to individual images
         and then merged.
         Args:
-            uploaded_file (UploadedFile): PDF file uploaded by the user via Streamlit file uploader.
             byte_obj (bytes): Byte object of the PDF file.
             dpi (int): Dots per inch for the conversion. Default is 200.
         Returns:
@@ -29,26 +29,41 @@ class ImageTools:
         """
         jpeg_image_path = image_byte_data = None
         try:
-            # Convert to PIL image list
-            images = convert_from_bytes(byte_obj, dpi=dpi, fmt='jpeg')    
+            # Convert to PIL image list using PyMuPDF
+            doc = fitz.open(stream=byte_obj, filetype="pdf")
+            images = []
+            
+            # Calculate zoom factor for DPI (PyMuPDF default is 72 DPI)
+            zoom = dpi / 72
+            matrix = fitz.Matrix(zoom, zoom)
+            
+            for page in doc:
+                pix = page.get_pixmap(matrix=matrix)
+                # Convert to PIL Image
+                # fitz pixmap is usually RGB, but check alpha
+                mode = "RGBA" if pix.alpha else "RGB"
+                img = Image.frombytes(mode, [pix.width, pix.height], pix.samples)
+                if mode == "RGBA":
+                    img = img.convert("RGB")
+                images.append(img)
+            
             image_count = len(images)
-            if image_count>1:
+            if image_count > 1:
                 jpeg_image_path = self._merge_images(images)
-            else:
+            elif image_count == 1:
                 image = images[0].convert("RGB")
                 image = image.resize((1024, 1024))  # Llama Vision: max size is 1120x1120
                 self.log.debug(f"image size: {image.size}")
                 jpeg_image_path = self.get_temp_jpeg(image)
+            else:
+                raise RuntimeError("No pages found in PDF.")
 
             with open(jpeg_image_path, 'rb') as file:
                 image_byte_data = file.read()      
         
-        except FileNotFoundError as ferr:
-            self.log.critical(f"FileNotFoundError {jpeg_image_path}: {ferr}")
-            raise FileNotFoundError("Failed to read coverted JPEG image! Please check the file path or permissions and try again.")
         except Exception as err:
             self.log.critical(f"{type(err)}: Error converting PDF to image: {err}")
-            raise RuntimeError("Failed to convert the PDF document to JPEG image. Please investigate the file format and content for corruption.")
+            raise RuntimeError("Failed to convert the PDF document to JPEG image. Please investigate the file format and content.")
 
         return image_byte_data
 
@@ -90,6 +105,39 @@ class ImageTools:
         merged_image_path = self.get_temp_jpeg(merged_image) 
         return merged_image_path
     
+    def pptx_to_jpeg(self, api_key, byte_obj, dpi=200):
+        """
+        Convert PPTX file to a JPEG image. PPTX is converted to PDF using the Cloudmersive API (free tier).
+        Content is then converted to JPEG images. PDFs are converted to individual images and then
+         merged using the pdf_to_jpeg method.
+        Args:
+            byte_obj (bytes): Byte object of the PPTX file.
+            dpi (int): Dots per inch for the conversion. Default is 200.
+        Returns:
+            image_bytes: byte object containing all image data.
+        """
+        try:
+            # Configure API key authorization: Apikey
+            configuration = cloudmersive_convert_api_client.Configuration()
+            configuration.api_key['Apikey'] = api_key
+            # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+            # configuration.api_key_prefix['Apikey'] = 'Bearer'
+            # create an instance of the API class
+            api_instance = cloudmersive_convert_api_client.ConvertDocumentApi(cloudmersive_convert_api_client.ApiClient(configuration))
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as temp_file:
+                temp_file.write(byte_obj)
+                input_file = temp_file.name
+                #temp_file.seek(0, os.SEEK_END)    # goto eof
+                #temp_file_size = temp_file.tell() # eof = size
+            
+            # Convert Document to PDF
+            response = api_instance.convert_document_pptx_to_pdf(input_file)
+            return self.pdf_to_jpeg(ast.literal_eval(response), dpi)
+
+        except Exception as e:
+            self.log.critical(f"Error converting PPTX to JPEG image: {e}")
+            raise RuntimeError("Failed to convert the PPTX document to JPEG image. Please investigate the file format and content.")
+
     def get_temp_jpeg(self, image):
         """
         Create a temporary JPEG file.
