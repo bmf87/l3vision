@@ -11,7 +11,7 @@ from streamlit_js_eval import streamlit_js_eval
 
 app_name = "VQA Chatbot"
 init_model = "google/gemini-3-pro-preview"
-local = True
+local = False
 
 app_dns = "http://localhost:8502/" if local else "https://l3vision-open-router.streamlit.app/"
 log = st.logger.get_logger(__name__)
