@@ -1,10 +1,26 @@
-# 📦 Visual QA Chatbot using Llama 3.2 Vision
+# 📦 Visual QA Chatbot using Multimodal Models
 
-A Visual QA application leveraging Meta's Llama 3.2 Vision 11B multi-modal language model (MMLM) at an OpenRouter endpoint.
-User prompting seeks to obtain model insights regarding the visual input. The app accepts JPEG, PNG, GIF and PDF formats.
+A Visual QA application leveraging mutliple multimodal LLMs (Gemini 3 Pro, Llama 4, and 3.2) available at OpenRouter endpoints.
+User prompting seeks to obtain model insights regarding the visual input. The app accepts JPEG, PNG, GIF, PDF and PPT/PPTX formats.
 
-**Please Note:** that multi-page PDFs can consume Llama 3.2 Context Window Size (128k) and produce inaccurate results.
-Test results were accurate and reliable up to ~6 pages. *While this app is intended for experimental/POC work to assess Llama 3.2 Vision, future enhancements may consider addressing this.*
+**Please Note:** *Processing the Powerpoint format may be suboptimal. Powerpoints go through a conversion process using Cloudmersive APIs.*
+
+## Gemini 3.0 Pro Preview
+
+- **Architecture:** Sparse Mixture-of-Experts (MoE) with native multimodal support for text, vision, and audio inputs
+- **Active Parameters:** not officially disclosed - *believed* to be 15-20B
+- **Inputs:** token context up to 1M
+- **Outputs:** text, with token context up to 64K 
+- **Knowledge Cutoff:** January 2025
+
+
+## Llama 4 Maverick
+
+- **Architecture:** Sparse Mixture-of-Experts (MoE) with native multimodal support for text, vision, and audio inputs
+- **Active Parameters:** 17B
+- **Inputs:** token context up to 1M
+- **Outputs:** text, with token context up to 8K
+- **Knowledge Cutoff:** August 2024
 
 ## Llama 3.2 Vision
 
@@ -15,14 +31,18 @@ Test results were accurate and reliable up to ~6 pages. *While this app is inten
 
 ### Further Reading
 
-For some further reading on Llama 3.2 visit [ai.meta.com](https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/)
+For further reading about:
+- **Google Gemini 3 Pro Preview** visit [Google Cloud](https://console.cloud.google.com/vertex-ai/publishers/google/model-garden/gemini-3-pro-preview?pli=1)
+- **Llama 4 Maverick** visit [ai.meta.com](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)
+- **Llama 3.2 Vision** visit [ai.meta.com](https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/)
+  
 
 ## OpenRouter
 
 [OpenRouter](https://openrouter.ai) provides a unified interface for leveraging LLMs with an API compatible with OpenAI
 
 - Provides an endpoint with a built-in fallback API.  Alleviating the need to deal with API failures
-- Integrates nicely with ChatOpenAI class in LangChain
+- Integrates nicely with the ChatOpenAI class in LangChain
 
 ## Demo App
 
